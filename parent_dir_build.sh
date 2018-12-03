@@ -1,5 +1,6 @@
 #!/bin/sh
 # Clone libpng from github, if ../libpng does not exits, git worktree for branches.
+# Build with cmake in ../_build/libpng<version> and run resulting binaries.
 
 # $0 is not reliable, but ...
 cd "$(dirname $0)"
@@ -24,4 +25,18 @@ fi
 for b in $BRANCHES; do
   [ ! -d $b ] && (cd $LIBPNG_GIT_DIR; git worktree add -f ../$b origin/$b; )
   [ ! -d $BUILD_ROOT_SUBDIR/$b ] && mkdir -p $BUILD_ROOT_SUBDIR/$b
+  ( cd $BUILD_ROOT_SUBDIR/$b; pwd;
+    rm CMakeCache.txt
+    CMD="cmake -DCMAKE_BUILD_TYPE=Release -DLIBPNG_SRC_DIR=$SRC_DIR/../$b $SRC_DIR";
+    echo "$CMD"; eval "$CMD";
+    cmake --build . --target all
+  )
+done
+
+for b in $BRANCHES; do
+  ls -gG $BUILD_ROOT_SUBDIR/$b/set_filter_check
+done
+
+for b in $BRANCHES; do
+  $BUILD_ROOT_SUBDIR/$b/set_filter_check
 done
