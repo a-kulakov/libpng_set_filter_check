@@ -1,6 +1,7 @@
 #!/bin/sh
 # Clone libpng from github, if ../libpng does not exits, git worktree for branches.
 # Build with cmake in ../_build/libpng<version> and run resulting binaries.
+# Set environment EXTRA_CHECKS=ON to have extra filters checks.
 
 # $0 is not reliable, but ...
 cd "$(dirname $0)"
@@ -35,8 +36,9 @@ for b in $BRANCHES; do
   [ ! -d $BUILD_ROOT_SUBDIR/$b ] && mkdir -p $BUILD_ROOT_SUBDIR/$b
   ( cd $BUILD_ROOT_SUBDIR/$b; pwd;
     rm CMakeCache.txt
-    CMD="cmake -DCMAKE_BUILD_TYPE=Release -DLIBPNG_SRC_DIR=$SRC_DIR/../$b $SRC_DIR";
-    echo "$CMD"; eval "$CMD";
+    CMD="cmake -DCMAKE_BUILD_TYPE=Release -DLIBPNG_SRC_DIR=$SRC_DIR/../$b";
+    [ "ON" = "$EXTRA_CHECKS" ] && CMD="$CMD -DEXTRA_PNG_FILTERS_CHECKS=ON"
+    echo "$CMD $SRC_DIR"; eval "$CMD $SRC_DIR";
     cmake --build . --target all
   )
 done

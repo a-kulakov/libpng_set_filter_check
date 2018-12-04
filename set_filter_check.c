@@ -59,10 +59,41 @@ int main()
     }
     png_set_write_fn(png_ptr, NULL, user_write_data, user_flush_data);
 
-    /* input end expected result values pairs. Expected values - png12 output */
+#if (PNG_LIBPNG_VER_MAJOR == 1) && (PNG_LIBPNG_VER_MINOR == 6)
+    png_set_benign_errors(png_ptr, 1); /* warning for filters 5-7 */
+#endif /* libpng16 */
+
+    /* {input, expected_result} values pairs. Expected values - png12 output */
     const int in_expected_pairs[][2] = {
         { PNG_FILTER_VALUE_NONE, PNG_FILTER_NONE },
         { PNG_FILTER_VALUE_SUB, PNG_FILTER_SUB },
+#ifdef EXTRA_PNG_FILTERS_CHECKS
+        { PNG_FILTER_VALUE_UP, PNG_FILTER_UP },
+        { PNG_FILTER_VALUE_AVG, PNG_FILTER_AVG },
+        { PNG_FILTER_VALUE_PAETH, PNG_FILTER_PAETH },
+        /* undocumented value,  libpng <...>: Unknown row filter for method 0 */
+        { 0x5, 0x9 },
+        { 0x6, 0x9 },
+        { 0x7, 0x9 },
+        /* single filter mask */
+        { PNG_FILTER_NONE, PNG_FILTER_NONE },
+        { PNG_FILTER_SUB , PNG_FILTER_SUB },
+        /* mask and value mix, png12 gives 009 -> 009 */
+        { PNG_FILTER_NONE | PNG_FILTER_VALUE_SUB, PNG_FILTER_NONE | PNG_FILTER_VALUE_SUB },
+        { PNG_FILTER_NONE | PNG_FILTER_VALUE_UP, PNG_FILTER_NONE | PNG_FILTER_VALUE_UP },
+        /* with bit in next byte */
+        { 0x100 | PNG_FILTER_VALUE_NONE , PNG_FILTER_NONE },
+        { 0x100 | PNG_FILTER_VALUE_SUB , PNG_FILTER_SUB },
+        /* libpng <...>: Unknown row filter for method 0 */
+        { 0x100 | 0x5, 0x9 },
+        { 0x100 | 0x6, 0x9 },
+        { 0x100 | 0x7, 0x9 },
+        { 0x100 | PNG_FILTER_NONE , PNG_FILTER_NONE },
+        { 0x100 | PNG_FILTER_SUB , PNG_FILTER_SUB },
+        /* mix */
+        { 0x100 | PNG_FILTER_NONE | PNG_FILTER_VALUE_SUB,
+            PNG_FILTER_NONE | PNG_FILTER_VALUE_SUB },
+#endif // EXTRA_PNG_FILTERS_CHECKS
         { PNG_NO_FILTERS, PNG_FILTER_NONE }, // == 0, == PNG_FILTER_VALUE_NONE
     };
 

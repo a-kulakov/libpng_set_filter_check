@@ -3,6 +3,8 @@ set(MODULE_NAME set_filter_check)
 
 project(${MODULE_NAME} C)
 
+OPTION(EXTRA_PNG_FILTERS_CHECKS "Extend basic filters check" OFF)
+
 option(PNG_SHARED "Build shared lib" OFF)
 option(PNG_STATIC "Build static lib" ON)
 option(PNG_TESTS  "Build libpng tests" OFF)
@@ -41,3 +43,7 @@ target_include_directories(${MODULE_NAME}
     $<TARGET_PROPERTY:png_static,INCLUDE_DIRECTORIES>
     $<BUILD_INTERFACE:${LIBPNG_BIN_DIR}> # pnglibconf.h
 )
+
+if (EXTRA_PNG_FILTERS_CHECKS)
+  add_definitions(-DEXTRA_PNG_FILTERS_CHECKS)
+endif()
