@@ -69,7 +69,9 @@ int main()
     const int tests_count = sizeof(in_expected_pairs) / sizeof(in_expected_pairs[0]);
 
     const int method = PNG_FILTER_TYPE_BASE; /* "Currently, the only valid for "method" is 0" */
+#if (PNG_LIBPNG_VER_MAJOR == 1) && (PNG_LIBPNG_VER_MINOR <= 6)
     const png_byte * do_filter_ptr = &(png_ptr->do_filter);
+#endif
 
     printf(" in v1.2 out (hex values, v1.2 - libpng12 output value)\n");
     for (int i=0; i < tests_count; ++i)
@@ -78,7 +80,13 @@ int main()
         in_filter = in;
         const int expected = in_expected_pairs[i][1];
         png_set_filter(png_ptr, method, in);
+#if (PNG_LIBPNG_VER_MAJOR == 1) && (PNG_LIBPNG_VER_MINOR <= 6)
         const int out = *do_filter_ptr;
+#else
+        /* In libpng17 png_set_filter() is macro, set PNG_SF_GET bit to get value */
+        const int out = png_setting(png_ptr, PNG_SF_GET | PNG_SW_COMPRESS_filters,
+            method, 0xfff); // arbitrary value
+#endif
         printf("%3x  %02x  %02x %s\n", in, expected, out, (expected==out) ? "" : "!=");
     }
 

@@ -9,7 +9,7 @@ echo "SRC_DIR=$SRC_DIR"
 cd ..
 pwd
 
-BRANCHES=${BRANCHES:="libpng12 libpng15 libpng16"}
+BRANCHES=${BRANCHES:="libpng12 libpng15 libpng16 libpng17"}
 # Where to build in subdirectory with branch name.
 BUILD_ROOT_SUBDIR=${BUILD_ROOT_SUBDIR:="_build"}
 LIBPNG_GIT_DIR=${LIBPNG_GIT_DIR:="libpng"}
