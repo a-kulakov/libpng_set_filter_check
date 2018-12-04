@@ -23,7 +23,15 @@ fi
 
 # git worktree for BRANCHES
 for b in $BRANCHES; do
-  [ ! -d $b ] && (cd $LIBPNG_GIT_DIR; git worktree add -f ../$b origin/$b; )
+  [ ! -d $b ] && (
+    cd $LIBPNG_GIT_DIR
+    # Take first remote branch, if any.
+    ref=$(git branch --list -r */${b} | awk '{if(NR==1) {$1=$1;print}}';)
+    # If not found use as <commit-ish>
+    [ "$ref" = "" ] && ref="${b}"
+    echo "Make git worktree in ../$b from '$ref'"
+    git worktree add -f ../$b $ref;
+  )
   [ ! -d $BUILD_ROOT_SUBDIR/$b ] && mkdir -p $BUILD_ROOT_SUBDIR/$b
   ( cd $BUILD_ROOT_SUBDIR/$b; pwd;
     rm CMakeCache.txt

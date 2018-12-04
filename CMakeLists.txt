@@ -21,6 +21,16 @@ if (TARGET png12_static)
   set(EXTRA_LIBS z)
 endif()
 
+if (NOT TARGET png_static)
+  if (TARGET png15_static)
+    add_library(png_static ALIAS png15_static)
+  elseif (TARGET png16_static)
+    add_library(png_static ALIAS png16_static)
+  else()
+    message(SEND_ERROR "png_static target is not defined")
+  endif()
+endif()
+
 target_link_libraries(${MODULE_NAME}
   png_static
   ${EXTRA_LIBS}
