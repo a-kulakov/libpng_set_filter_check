@@ -103,9 +103,9 @@ int main()
         { PNG_FILTER_VALUE_AVG, PNG_FILTER_AVG },
         { PNG_FILTER_VALUE_PAETH, PNG_FILTER_PAETH },
         /* undocumented value,  libpng <...>: Unknown row filter for method 0 */
-        { 0x5, 0x9 },
-        { 0x6, 0x9 },
-        { 0x7, 0x9 },
+        { 0x5, 0 },
+        { 0x6, 0 },
+        { 0x7, 0 },
         /* single filter mask */
         { PNG_FILTER_NONE, PNG_FILTER_NONE },
         { PNG_FILTER_SUB , PNG_FILTER_SUB },
@@ -116,9 +116,9 @@ int main()
         { 0x100 | PNG_FILTER_VALUE_NONE , PNG_FILTER_NONE },
         { 0x100 | PNG_FILTER_VALUE_SUB , PNG_FILTER_SUB },
         /* libpng <...>: Unknown row filter for method 0 */
-        { 0x100 | 0x5, 0x9 },
-        { 0x100 | 0x6, 0x9 },
-        { 0x100 | 0x7, 0x9 },
+        { 0x100 | 0x5, 0 },
+        { 0x100 | 0x6, 0 },
+        { 0x100 | 0x7, 0 },
         { 0x100 | PNG_FILTER_NONE , PNG_FILTER_NONE },
         { 0x100 | PNG_FILTER_SUB , PNG_FILTER_SUB },
         /* mix */
