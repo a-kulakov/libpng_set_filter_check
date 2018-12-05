@@ -4,6 +4,8 @@ set(MODULE_NAME set_filter_check)
 project(${MODULE_NAME} C)
 
 OPTION(EXTRA_PNG_FILTERS_CHECKS "Extend basic filters check" OFF)
+# multiples png_set_filter() calls can have side effects
+OPTION(REUSE_PNG_STRUCT "Use one set of png structs for all filters checks" OFF)
 
 option(PNG_SHARED "Build shared lib" OFF)
 option(PNG_STATIC "Build static lib" ON)
@@ -46,4 +48,8 @@ target_include_directories(${MODULE_NAME}
 
 if (EXTRA_PNG_FILTERS_CHECKS)
   add_definitions(-DEXTRA_PNG_FILTERS_CHECKS)
+endif()
+
+if (REUSE_PNG_STRUCT)
+  add_definitions(-DREUSE_PNG_STRUCT)
 endif()

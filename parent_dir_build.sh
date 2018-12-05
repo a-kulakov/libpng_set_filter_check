@@ -35,9 +35,11 @@ for b in $BRANCHES; do
   )
   [ ! -d $BUILD_ROOT_SUBDIR/$b ] && mkdir -p $BUILD_ROOT_SUBDIR/$b
   ( cd $BUILD_ROOT_SUBDIR/$b; pwd;
-    rm CMakeCache.txt
+    rm -f CMakeCache.txt
+    rm -f set_filter_check
     CMD="cmake -DCMAKE_BUILD_TYPE=Release -DLIBPNG_SRC_DIR=$SRC_DIR/../$b";
     [ "ON" = "$EXTRA_CHECKS" ] && CMD="$CMD -DEXTRA_PNG_FILTERS_CHECKS=ON"
+    [ "ON" = "$REUSE_PNG_STRUCT" ] && CMD="$CMD -DREUSE_PNG_STRUCT=ON"
     echo "$CMD $SRC_DIR"; eval "$CMD $SRC_DIR";
     cmake --build . --target all
   )

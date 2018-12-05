@@ -1,5 +1,9 @@
 #include <stdio.h> // printf()
 #include <stdlib.h> // exit()
+#if __STDC_VERSION__ >= 201112L
+/* C11 support */
+#include <stdnoreturn.h>
+#endif
 
 #include <png.h>
 #if (PNG_LIBPNG_VER_MAJOR == 1) && (PNG_LIBPNG_VER_MINOR > 2) && (PNG_LIBPNG_VER_MINOR <= 6)
@@ -16,6 +20,9 @@ enum exit_code {
 
 static int in_filter = PNG_NO_FILTERS;
 
+#if __STDC_VERSION__ >= 201112L
+noreturn
+#endif
 void user_error_fn(png_structp png_ptr, png_const_charp error_cstr)
 {
     (void)png_ptr;
@@ -41,9 +48,16 @@ void user_flush_data(png_structp png_ptr)
     (void)png_ptr;
 }
 
-int main()
+struct libpng
 {
-    printf("libpng version %s\n", PNG_LIBPNG_VER_STRING);
+    png_structp png_ptr;
+    png_infop info_ptr;
+};
+
+int libpng_write_create(struct libpng * png_write)
+{
+    png_write->png_ptr = NULL;
+    png_write->info_ptr = NULL;
 
     png_structp png_ptr = png_create_write_struct(PNG_LIBPNG_VER_STRING,
         NULL, user_error_fn, user_warning_fn);
@@ -62,6 +76,23 @@ int main()
 #if (PNG_LIBPNG_VER_MAJOR == 1) && (PNG_LIBPNG_VER_MINOR == 6)
     png_set_benign_errors(png_ptr, 1); /* warning for filters 5-7 */
 #endif /* libpng16 */
+
+    png_write->png_ptr = png_ptr;
+    png_write->info_ptr = info_ptr;
+
+    return SUCCESS;
+}
+
+void libpng_write_destroy(struct libpng * png_write)
+{
+    png_destroy_write_struct(&png_write->png_ptr, &png_write->info_ptr);
+    png_write->png_ptr = NULL;
+    png_write->info_ptr = NULL;
+}
+
+int main()
+{
+    printf("libpng version %s\n", PNG_LIBPNG_VER_STRING);
 
     /* {input, expected_result} values pairs. Expected values - png12 output */
     const int in_expected_pairs[][2] = {
@@ -100,26 +131,44 @@ int main()
     const int tests_count = sizeof(in_expected_pairs) / sizeof(in_expected_pairs[0]);
 
     const int method = PNG_FILTER_TYPE_BASE; /* "Currently, the only valid for "method" is 0" */
-#if (PNG_LIBPNG_VER_MAJOR == 1) && (PNG_LIBPNG_VER_MINOR <= 6)
-    const png_byte * do_filter_ptr = &(png_ptr->do_filter);
+
+    struct libpng png_write = {NULL, NULL};
+#ifdef REUSE_PNG_STRUCT
+    printf("One png_structp for all png_set_filter() calls.\n");
 #endif
 
     printf(" in v1.2 out (hex values, v1.2 - libpng12 output value)\n");
     for (int i=0; i < tests_count; ++i)
     {
+        if (!png_write.png_ptr)
+        {
+            int status = libpng_write_create(&png_write);
+            if (status != SUCCESS)
+            {
+                printf("Failed libpng_write_create(), return code %d", status);
+                return status;
+            }
+        }
+        const png_structp png_ptr = png_write.png_ptr;
         const int in = in_expected_pairs[i][0];
-        in_filter = in;
+        in_filter = in; // hack for png errors and warnings reporting
         const int expected = in_expected_pairs[i][1];
         png_set_filter(png_ptr, method, in);
 #if (PNG_LIBPNG_VER_MAJOR == 1) && (PNG_LIBPNG_VER_MINOR <= 6)
-        const int out = *do_filter_ptr;
+        const int out = png_ptr->do_filter;
 #else
         /* In libpng17 png_set_filter() is macro, set PNG_SF_GET bit to get value */
         const int out = png_setting(png_ptr, PNG_SF_GET | PNG_SW_COMPRESS_filters,
             method, 0xfff); // arbitrary value
 #endif
         printf("%3x  %02x  %02x %s\n", in, expected, out, (expected==out) ? "" : "!=");
+#ifndef REUSE_PNG_STRUCT
+        libpng_write_destroy(&png_write);
+#endif
     }
+#ifdef REUSE_PNG_STRUCT
+        libpng_write_destroy(&png_write);
+#endif
 
     return SUCCESS;
 }
