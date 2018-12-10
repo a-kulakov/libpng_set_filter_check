@@ -157,10 +157,31 @@ int main()
 #if (PNG_LIBPNG_VER_MAJOR == 1) && (PNG_LIBPNG_VER_MINOR <= 6)
         const int out = png_ptr->do_filter;
 #else
+        /* >= libpng17 */
+        /* png_set_filter() is a macro, no error/warning by default. */
+        png_int_32 result = png_setting(png_ptr, PNG_SW_COMPRESS_filters,
+            method, in);
+        if (PNG_FAILED(result))
+        {
+            /* png.h: "Results larger (more positive) than PNG_ENOSYS are success codes" */
+            printf("   0x%0x silent png_set_filter? png_settings() PNG_FAILED\n"
+                "   result=(%s%x)=0x%0x=%d%s\n", in,
+                /* wierd (-0x7ffffff0), etc. like '#define' string in png.h */
+                (result < 0) ? "-": "", (result < 0) ? ~(result-1) : result,
+                (unsigned)result, result,
+                (result==PNG_EDOM) ? " PNG_EDOM" : "");
+        }
         /* In libpng17 png_set_filter() is macro, set PNG_SF_GET bit to get value */
-        const int out = png_setting(png_ptr, PNG_SF_GET | PNG_SW_COMPRESS_filters,
+        int out = png_setting(png_ptr, PNG_SF_GET | PNG_SW_COMPRESS_filters,
             method, 0xfff); // arbitrary value
-#endif
+#ifndef REUSE_PNG_STRUCT
+        if (PNG_FAILED(result) && (out == PNG_UNSET))
+        {
+            out = 0; /* In initialization struct most likes was zeroed. */
+        }
+#endif // REUSE_PNG_STRUCT
+#endif // >= libpng17
+
         printf("%3x  %02x  %02x %s\n", in, expected, out, (expected==out) ? "" : "!=");
 #ifndef REUSE_PNG_STRUCT
         libpng_write_destroy(&png_write);
